@@ -2,7 +2,7 @@ const crypto = require("crypto");
 
 exports.postEncrypt = async (req, res, next) => {
   try {
-    const key = "12345678123456781234567812345678";
+    const key = process.env.ENCRYPTION_KEY;
     const iv = crypto.randomBytes(16);
     const data = req.body.data;
     //Encrypting text
@@ -25,17 +25,24 @@ exports.postEncrypt = async (req, res, next) => {
 };
 
 exports.postDecrypt = (req, res, next) => {
-  const key = "12345678123456781234567812345678";
-  let iv = Buffer.from(req.body.iv, "hex");
-  console.log(iv);
-  const encryptedData = req.body.encryptedData;
-  console.log(encryptedData);
+  try {
+    const key = process.env.ENCRYPTION_KEY;
+    // console.log(key);
 
-  let encryptedText = Buffer.from(encryptedData, "hex");
-  let decipher = crypto.createDecipheriv("aes-256-cbc", Buffer.from(key), iv);
-  let decrypted = decipher.update(encryptedText);
-  decrypted = Buffer.concat([decrypted, decipher.final()]);
-  const decryptedData = decrypted.toString();
+    let iv = Buffer.from(req.body.iv, "hex");
+    // console.log(iv);
 
-  res.status(201).send(decryptedData);
+    const encryptedData = req.body.encryptedData;
+    // console.log(encryptedData);
+
+    let encryptedText = Buffer.from(encryptedData, "hex");
+    let decipher = crypto.createDecipheriv("aes-256-cbc", Buffer.from(key), iv);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    const decryptedData = decrypted.toString();
+
+    res.status(201).send(decryptedData);
+  } catch (error) {
+    res.status(500).json(error);
+  }
 };
