@@ -4,6 +4,7 @@ const router = express.Router();
 
 const vehicleControllers = require("../controllers/vehicle");
 
-router.post("/", vehicleControllers.postData);
+router.post("/encrypt", vehicleControllers.postEncrypt);
+router.post("/decrypt", vehicleControllers.postDecrypt);
 
 module.exports = router;

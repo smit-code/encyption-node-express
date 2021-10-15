@@ -1,69 +1,41 @@
 const crypto = require("crypto");
 
-exports.postData = async (req, res, next) => {
+exports.postEncrypt = async (req, res, next) => {
   try {
+    const key = "12345678123456781234567812345678";
+    const iv = crypto.randomBytes(16);
     const data = req.body.data;
+    //Encrypting text
+    function encrypt(data) {
+      let cipher = crypto.createCipheriv("aes-256-cbc", Buffer.from(key), iv);
+      let encrypted = cipher.update(data);
+      encrypted = Buffer.concat([encrypted, cipher.final()]);
+      return {
+        iv: iv.toString("hex"),
+        encryptedData: encrypted.toString("hex"),
+      };
+    }
 
-    const algorithm = "aes-256-cbc";
-
-    // generate 16 bytes of random data
-    const initVector = crypto.randomBytes(16);
-
-    // protected data
-    const message = data;
-
-    // secret key generate 32 bytes of random data
-    const Securitykey = crypto.randomBytes(32);
-
-    const Stringkey = Securitykey.toString("hex"); // 'Hello, World'
-    console.log(Stringkey);
-
-    // the cipher function
-    const cipher = crypto.createCipheriv(algorithm, Securitykey, initVector);
-
-    // encrypt the message
-    // input encoding
-    // output encoding
-    let encryptedData = cipher.update(message, "utf-8", "hex");
-
-    encryptedData += cipher.final("hex");
-
-    console.log("Encrypted message: " + encryptedData);
-    const EncryptedData = "Encrypted message: " + encryptedData;
-
-    // the decipher function
-    const decipher = crypto.createDecipheriv(
-      algorithm,
-      Securitykey,
-      initVector
-    );
-
-    let decryptedData = decipher.update(encryptedData, "hex", "utf-8");
-
-    decryptedData += decipher.final("utf8");
-
-    console.log("Decrypted message: " + decryptedData);
-
-    const DecryptedData = "  Decrypted message: " + decryptedData;
-    res.status(201).json(EncryptedData + DecryptedData);
+    // Text send to encrypt function
+    var encryptData = encrypt(data);
+    res.status(201).send(encryptData);
   } catch (error) {
     res.status(500).json(error);
   }
 };
 
-// exports.postData = async (req, res, next) => {
-//   console.log(req.body.data);
-//   var algorithm = "aes-192-cbc"; //algorithm to use
-//   var password = "secretkey";
-//   const key = crypto.scryptSync(password, "salt", 24); //create key
-//   var text = req.body.data; //text to be encrypted
+exports.postDecrypt = (req, res, next) => {
+  const key = "12345678123456781234567812345678";
+  let iv = Buffer.from(req.body.iv, "hex");
+  console.log(iv);
+  const encryptedData = req.body.encryptedData;
+  console.log(encryptedData);
 
-//   const iv = crypto.randomBytes(16); //generate different ciphertext everytime
-//   const cipher = crypto.createCipheriv(algorithm, key, iv);
-//   var encrypted = cipher.update(text, "utf8", "hex") + cipher.final("hex"); // encrypted text
+  let encryptedText = Buffer.from(encryptedData, "hex");
+  let decipher = crypto.createDecipheriv("aes-256-cbc", Buffer.from(key), iv);
+  let decrypted = decipher.update(encryptedText);
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+  const decryptedData = decrypted.toString();
 
-//   const decipher = crypto.createDecipheriv(algorithm, key, iv);
-//   var decrypted =
-//     decipher.update(encrypted, "hex", "utf8") + decipher.final("utf8"); //deciphered text
-//   console.log(decrypted);
-// };
+  res.status(201).send(decryptedData);
+};
